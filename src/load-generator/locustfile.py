@@ -111,7 +111,7 @@ people_file = open('people.json')
 people = json.load(people_file)
 
 class WebsiteUser(HttpUser):
-    wait_time = between(1, 10)
+    wait_time = between(10, 15)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

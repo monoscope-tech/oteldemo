@@ -1,18 +1,70 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
-
 # extra settings to be merged into OpenTelemetry Collector configuration
 # do not delete this file
-
 ## Example configuration for sending data to your own OTLP HTTP backend
 ## Note: the spanmetrics exporter must be included in the exporters array
 ## if overriding the traces pipeline.
 ##
-#  exporters:
-#    otlphttp/example:
-#      endpoint: <your-endpoint-url>
-#
-#  service:
-#    pipelines:
-#      traces:
-#        exporters: [spanmetrics, otlphttp/example]
+
+exporters:
+  otlp/example:
+    endpoint: http://host.docker.internal:4317
+    tls:
+      insecure: true
+  otlp/monoscope:
+    endpoint: http://otelcol.monoscope.tech:4317
+    headers: null
+    tls:
+      insecure: true
+
+processors:
+  batch:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 50
+    spike_limit_percentage: 25
+  resourcedetection:
+    detectors: [env, docker, system]
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          # could be removed when https://github.com/vercel/next.js/pull/64852 is fixed upstream
+          - replace_pattern(name, "\\?.*", "")
+          - replace_match(name, "GET /api/products/*", "GET /api/products/{productId}")
+  probabilistic_sampler:
+    # percentage of traces to keep (0-100). Adjust to desired sampling rate.
+    sampling_percentage: 20.0
+  resource/add-project-key:
+    attributes:
+      - key: at-project-key
+        value: <YOUR_PROJECT_KEY>
+        action: insert
+
+service:
+  pipelines:
+    traces:
+      exporters: [spanmetrics, otlp/monoscope]
+      processors:
+        [
+          resource/add-project-key,
+          probabilistic_sampler,
+          memory_limiter,
+          transform,
+          batch,
+        ]
+    logs:
+      exporters: [otlp/monoscope]
+      processors:
+        [
+          resource/add-project-key,
+          probabilistic_sampler,
+          memory_limiter,
+          transform,
+          batch,
+        ]
+    metrics: # Add metrics pipeline
+      exporters: [otlp/monoscope]
+      processors: [resource/add-project-key, memory_limiter, transform, batch] # Use metrics-specific processor if needed

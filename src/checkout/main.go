@@ -56,6 +56,7 @@ import (
 	pb "github.com/open-telemetry/opentelemetry-demo/src/checkout/genproto/oteldemo"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/kafka"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/money"
+	monoscope "github.com/monoscope-tech/monoscope-go/native"
 )
 
 //go:generate go install google.golang.org/protobuf/cmd/protoc-gen-go
@@ -107,7 +108,6 @@ func initMeterProvider() *sdkmetric.MeterProvider {
 	if err != nil {
 		logger.Error(fmt.Sprintf("new otlp metric grpc exporter failed: %v", err))
 	}
-
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter)),
 		sdkmetric.WithResource(initResource()),

@@ -40,7 +40,7 @@ processors:
   resource/add-project-key:
     attributes:
       - key: at-project-key
-        value: z6EYf5FMa3gzzNUfgKZsHjtN9GLETNaev7/v0LkNozFQ89nH
+        value: <YOUR_PROJECT_KEY>
         action: insert
 
 service:

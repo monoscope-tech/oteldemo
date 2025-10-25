@@ -175,26 +175,6 @@ func main() {
 		}
 	}()
 
-
-	// configure openTelemetry
-	shutdown, err := monoscope.ConfigureOpenTelemetry()
-	if err != nil {
-		log.Printf("error configuring openTelemetry: %v", err)
-	}
-	
-	defer shutdown()
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, World!"))
-	})
-    
-	// configure monoscope middleware
-	nativeMiddleware := monoscope.Middleware(monoscope.Config{
-		RedactHeaders:       []string{"Authorization", "X-Api-Key"},
-		RedactRequestBody:   []string{"password", "credit_card"},
-		RedactResponseBody:  []string{"password", "credit_card"},
-	})
-
 	// this *must* be called after the logger provider is initialized
 	// otherwise the Sarama producer in kafka/producer.go will not be
 	// able to log properly

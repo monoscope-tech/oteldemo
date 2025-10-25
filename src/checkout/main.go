@@ -56,6 +56,7 @@ import (
 	pb "github.com/open-telemetry/opentelemetry-demo/src/checkout/genproto/oteldemo"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/kafka"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/money"
+	monoscope "github.com/monoscope-tech/monoscope-go/native"
 )
 
 //go:generate go install google.golang.org/protobuf/cmd/protoc-gen-go
@@ -107,7 +108,6 @@ func initMeterProvider() *sdkmetric.MeterProvider {
 	if err != nil {
 		logger.Error(fmt.Sprintf("new otlp metric grpc exporter failed: %v", err))
 	}
-
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter)),
 		sdkmetric.WithResource(initResource()),
@@ -174,6 +174,26 @@ func main() {
 			logger.Error(fmt.Sprintf("Error shutting down logger provider: %v", err))
 		}
 	}()
+
+
+	// configure openTelemetry
+	shutdown, err := monoscope.ConfigureOpenTelemetry()
+	if err != nil {
+		log.Printf("error configuring openTelemetry: %v", err)
+	}
+	
+	defer shutdown()
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, World!"))
+	})
+    
+	// configure monoscope middleware
+	nativeMiddleware := monoscope.Middleware(monoscope.Config{
+		RedactHeaders:       []string{"Authorization", "X-Api-Key"},
+		RedactRequestBody:   []string{"password", "credit_card"},
+		RedactResponseBody:  []string{"password", "credit_card"},
+	})
 
 	// this *must* be called after the logger provider is initialized
 	// otherwise the Sarama producer in kafka/producer.go will not be
